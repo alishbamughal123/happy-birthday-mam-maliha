@@ -268,21 +268,37 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const canvasElement = sceneInstance.renderer.domElement;
-  canvasElement.addEventListener('click', () => {
-    if (!sceneInstance.hoveredObject) return;
-    const name = sceneInstance.hoveredObject.name;
+  function handleCanvasPointer(e) {
+    const rect = canvasElement.getBoundingClientRect();
+    const clientX = e.clientX || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : 0);
+    const clientY = e.clientY || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientY : 0);
+    if (!clientX && !clientY) return;
 
-    if (name && name.includes('candle')) {
-      blowCandleBtn.click();
-    } else if (name && name.includes('balloon')) {
-      sceneInstance.popBalloon(sceneInstance.hoveredObject);
-      showToast('🎈 Balloon popped!');
-    } else if (name && name.includes('portrait')) {
-      tributeBtn.click();
-    } else if (name && name.includes('gift')) {
-      giftBtn.click();
+    const x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+    sceneInstance.raycaster.setFromCamera(new THREE.Vector2(x, y), sceneInstance.camera);
+    const intersects = sceneInstance.raycaster.intersectObjects(sceneInstance.interactiveObjects, true);
+
+    if (intersects.length > 0) {
+      const topObj = intersects[0].object;
+      const name = topObj.name;
+
+      if (name && name.includes('candle')) {
+        blowCandleBtn.click();
+      } else if (name && name.includes('balloon')) {
+        sceneInstance.popBalloon(topObj);
+        showToast('🎈 Balloon popped!');
+      } else if (name && name.includes('portrait')) {
+        tributeBtn.click();
+      } else if (name && name.includes('gift')) {
+        giftBtn.click();
+      }
     }
-  });
+  }
+
+  canvasElement.addEventListener('click', handleCanvasPointer);
+
 
   if (snapshotBtn) {
     snapshotBtn.addEventListener('click', () => {

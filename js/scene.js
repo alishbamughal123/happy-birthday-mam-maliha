@@ -37,6 +37,7 @@ class BirthdayScene {
 
     const aspect = this.container.clientWidth / this.container.clientHeight;
     this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+    this.updateCameraForViewport();
     this.camera.position.copy(this.cameraViews.overview.pos);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
@@ -52,9 +53,13 @@ class BirthdayScene {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.maxPolarAngle = Math.PI / 2 - 0.02;
-    this.controls.minDistance = 3.5;
-    this.controls.maxDistance = 25;
+    this.controls.minDistance = 3.0;
+    this.controls.maxDistance = 30;
     this.controls.target.copy(this.cameraViews.overview.target);
+    this.controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.DOLLY_PAN
+    };
 
     this.setupLighting();
     this.createEnvironment();
@@ -69,10 +74,41 @@ class BirthdayScene {
     this.createAmbientLanterns();
 
     window.addEventListener('resize', () => this.onWindowResize(), false);
+    window.addEventListener('orientationchange', () => setTimeout(() => this.onWindowResize(), 200), false);
+    
     this.renderer.domElement.addEventListener('mousemove', (e) => this.onMouseMove(e), false);
     this.renderer.domElement.addEventListener('pointerdown', () => { this.isAutoRotating = false; }, false);
 
     this.animate();
+  }
+
+  updateCameraForViewport() {
+    if (!this.container || !this.camera) return;
+    const width = this.container.clientWidth || window.innerWidth;
+    const height = this.container.clientHeight || window.innerHeight;
+    const aspect = width / height;
+    const isMobile = width < 768 || aspect < 1.0;
+
+    if (isMobile) {
+      this.camera.fov = Math.min(75, Math.max(55, 45 / Math.max(aspect, 0.45) * 0.65));
+      this.cameraViews.overview.pos.set(0, 4.0, 13.5);
+      this.cameraViews.cake.pos.set(0, 3.2, 7.8);
+      this.cameraViews.candle.pos.set(0, 5.8, 4.2);
+      this.cameraViews.portrait.pos.set(-3.4, 3.0, 6.8);
+      this.cameraViews.gift.pos.set(3.4, 2.2, 6.5);
+      this.cameraViews.sky.pos.set(0, 5.0, 14.0);
+    } else {
+      this.camera.fov = 45;
+      this.cameraViews.overview.pos.set(0, 4.5, 11);
+      this.cameraViews.cake.pos.set(0, 3.5, 6.2);
+      this.cameraViews.candle.pos.set(0, 5.6, 3.5);
+      this.cameraViews.portrait.pos.set(-3.8, 3.2, 5.2);
+      this.cameraViews.gift.pos.set(3.8, 2.4, 4.8);
+      this.cameraViews.sky.pos.set(0, 5.0, 12);
+    }
+
+    this.camera.aspect = aspect;
+    this.camera.updateProjectionMatrix();
   }
 
   setupLighting() {
@@ -82,8 +118,8 @@ class BirthdayScene {
     const keyLight = new THREE.SpotLight(0xfff4e0, 2.4, 30, Math.PI / 4, 0.4, 1.2);
     keyLight.position.set(6, 14, 8);
     keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 2048;
-    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
     keyLight.shadow.camera.near = 1;
     keyLight.shadow.camera.far = 30;
     keyLight.shadow.bias = -0.001;
@@ -127,7 +163,7 @@ class BirthdayScene {
     ring2.position.y = 0.01;
     this.scene.add(ring2);
 
-    const starsCount = 1200;
+    const starsCount = 1000;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starsCount * 3);
     const starColors = new Float32Array(starsCount * 3);
@@ -823,10 +859,9 @@ class BirthdayScene {
 
   onWindowResize() {
     if (!this.container) return;
-    const width = this.container.clientWidth;
-    const height = this.container.clientHeight;
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
+    const width = this.container.clientWidth || window.innerWidth;
+    const height = this.container.clientHeight || window.innerHeight;
+    this.updateCameraForViewport();
     this.renderer.setSize(width, height);
   }
 
