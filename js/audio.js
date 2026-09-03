@@ -2,12 +2,16 @@ class BirthdayAudioEngine {
   constructor() {
     this.ctx = null;
     this.isPlayingMusic = false;
-    this.isMuted = false;
-    this.masterVolume = 0.75;
+    this._isMuted = false;
+    this._masterVolume = 0.75;
     this.currentTimeout = null;
     this.melodyIndex = 0;
     this.tempo = 125;
     this.onStateChange = null;
+
+    // Real Singer Audio Track (loads assets/birthday-song.mp3)
+    this.audioTrack = null;
+    this.useFallbackSynth = false;
 
     this.melody = [
       { note: 'D4', dur: 0.75 },
@@ -52,6 +56,28 @@ class BirthdayAudioEngine {
     };
   }
 
+  get isMuted() {
+    return this._isMuted;
+  }
+
+  set isMuted(val) {
+    this._isMuted = !!val;
+    if (this.audioTrack) {
+      this.audioTrack.muted = this._isMuted;
+    }
+  }
+
+  get masterVolume() {
+    return this._masterVolume;
+  }
+
+  set masterVolume(val) {
+    this._masterVolume = Math.max(0, Math.min(1, val));
+    if (this.audioTrack) {
+      this.audioTrack.volume = this._masterVolume;
+    }
+  }
+
   init() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -59,6 +85,40 @@ class BirthdayAudioEngine {
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
+    }
+
+    if (!this.audioTrack) {
+      this.initAudioTrack();
+    }
+  }
+
+  initAudioTrack() {
+    try {
+      this.audioTrack = new Audio('assets/birthday-song.mp3');
+      this.audioTrack.loop = true;
+      this.audioTrack.volume = this._masterVolume;
+      this.audioTrack.muted = this._isMuted;
+
+      this.audioTrack.addEventListener('play', () => {
+        this.isPlayingMusic = true;
+        if (this.onStateChange) this.onStateChange(true);
+      });
+
+      this.audioTrack.addEventListener('pause', () => {
+        this.isPlayingMusic = false;
+        if (this.onStateChange) this.onStateChange(false);
+      });
+
+      this.audioTrack.addEventListener('error', (e) => {
+        console.warn('Vocal song file not found or failed to load. Falling back to music box synth.', e);
+        this.useFallbackSynth = true;
+        if (this.isPlayingMusic) {
+          this.startFallbackMelody();
+        }
+      });
+    } catch (err) {
+      console.warn('Audio element error:', err);
+      this.useFallbackSynth = true;
     }
   }
 
@@ -75,22 +135,49 @@ class BirthdayAudioEngine {
   startMusic() {
     this.init();
     this.isPlayingMusic = true;
-    this.melodyIndex = 0;
-    this.playNextNote();
-    if (this.onStateChange) this.onStateChange(true);
+
+    if (this.audioTrack && !this.useFallbackSynth) {
+      const playPromise = this.audioTrack.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          if (this.onStateChange) this.onStateChange(true);
+        }).catch((err) => {
+          console.warn('Vocal song autoplay blocked or failed, using synth fallback:', err);
+          this.useFallbackSynth = true;
+          this.startFallbackMelody();
+          if (this.onStateChange) this.onStateChange(true);
+        });
+      }
+    } else {
+      this.startFallbackMelody();
+      if (this.onStateChange) this.onStateChange(true);
+    }
   }
 
   stopMusic() {
     this.isPlayingMusic = false;
+    if (this.audioTrack) {
+      this.audioTrack.pause();
+    }
+    this.stopFallbackMelody();
+    if (this.onStateChange) this.onStateChange(false);
+  }
+
+  startFallbackMelody() {
+    this.stopFallbackMelody();
+    this.melodyIndex = 0;
+    this.playNextNote();
+  }
+
+  stopFallbackMelody() {
     if (this.currentTimeout) {
       clearTimeout(this.currentTimeout);
       this.currentTimeout = null;
     }
-    if (this.onStateChange) this.onStateChange(false);
   }
 
   playNextNote() {
-    if (!this.isPlayingMusic || !this.ctx) return;
+    if (!this.isPlayingMusic || !this.ctx || !this.useFallbackSynth) return;
 
     const item = this.melody[this.melodyIndex];
     const beatSec = 60 / this.tempo;

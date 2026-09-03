@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     musicBtn.addEventListener('click', () => {
       if (window.birthdayAudio) {
         const isPlaying = window.birthdayAudio.toggleMusic();
-        showToast(isPlaying ? '🎵 Birthday Melody Playing' : '⏸️ Music Paused');
+        showToast(isPlaying ? '🎵 Birthday Song Playing' : '⏸️ Song Paused');
       }
     });
   }
