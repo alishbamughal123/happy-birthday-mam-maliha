@@ -111,12 +111,52 @@ html, body {
   pointer-events: none;
 }
 
+.intro-portrait-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.intro-photo-ring {
+  width: 125px;
+  height: 125px;
+  border-radius: 50%;
+  padding: 4px;
+  background: var(--gold-gradient);
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.6), 0 0 50px rgba(255, 65, 108, 0.35);
+  margin-top: -6px;
+  animation: pulsePhotoRing 3s infinite ease-in-out;
+  overflow: hidden;
+}
+
+.intro-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+@keyframes pulsePhotoRing {
+  0%, 100% {
+    box-shadow: 0 0 22px rgba(255, 215, 0, 0.5), 0 0 45px rgba(255, 65, 108, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(255, 215, 0, 0.8), 0 0 65px rgba(255, 65, 108, 0.5);
+    transform: scale(1.03);
+  }
+}
+
 .crown-icon {
-  font-size: 3rem;
+  font-size: 2.8rem;
   display: inline-block;
   animation: bounceCrown 2s infinite ease-in-out;
   filter: drop-shadow(0 0 15px gold);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .intro-subtitle {
@@ -574,20 +614,107 @@ html, body {
 }
 
 .tribute-img-wrap {
-  width: 105px;
-  height: 105px;
-  margin: 0 auto 12px;
-  border-radius: 50%;
-  padding: 3px;
+  width: 140px;
+  height: 155px;
+  margin: 0 auto 14px;
+  border-radius: 18px;
+  padding: 4px;
   background: var(--gold-gradient);
-  box-shadow: 0 0 22px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 28px rgba(255, 215, 0, 0.6);
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.tribute-img-wrap:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 38px rgba(255, 215, 0, 0.8);
 }
 
 .tribute-img {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 14px;
   object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.photo-expand-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #ffd700;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  white-space: nowrap;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Photo Lightbox Modal */
+.photo-lightbox-box {
+  max-width: 440px;
+  text-align: center;
+  padding: 28px 20px 24px;
+}
+
+.lightbox-crown {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  animation: bounceCrown 2s infinite ease-in-out;
+  filter: drop-shadow(0 0 14px gold);
+}
+
+.lightbox-frame {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto 16px;
+  border-radius: 20px;
+  padding: 5px;
+  background: var(--gold-gradient);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 35px rgba(255, 215, 0, 0.6);
+}
+
+.lightbox-img {
+  width: 100%;
+  height: auto;
+  max-height: 55vh;
+  object-fit: contain;
+  border-radius: 16px;
+  display: block;
+}
+
+.lightbox-name {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.5rem;
+  color: var(--primary-gold);
+  margin-bottom: 4px;
+}
+
+.lightbox-wish {
+  font-family: 'Great Vibes', cursive;
+  font-size: 1.45rem;
+  color: #ffb6c1;
+  text-shadow: 0 0 15px rgba(255, 182, 193, 0.6);
+  margin-bottom: 18px;
+}
+
+.lightbox-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .tribute-title {
@@ -962,17 +1089,31 @@ html, body {
   }
 
   .camera-toolbar {
-    left: 12px;
-    top: 64px;
-    padding: 4px;
-    border-radius: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 66px;
+    flex-direction: row;
+    padding: 4px 6px;
+    border-radius: 25px;
     gap: 4px;
+    overflow-x: auto;
+    max-width: calc(100vw - 20px);
+    background: rgba(15, 5, 30, 0.85);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    z-index: 20;
+  }
+
+  .camera-toolbar::-webkit-scrollbar {
+    display: none;
   }
 
   .cam-btn {
-    padding: 5px 8px;
-    font-size: 0.74rem;
+    padding: 5px 10px;
+    font-size: 0.72rem;
     gap: 4px;
+    border-radius: 16px;
+    flex-shrink: 0;
   }
 
   .center-greeting {
@@ -989,20 +1130,26 @@ html, body {
   }
 
   .intro-content {
-    padding: 28px 18px;
+    padding: 24px 16px;
+    max-width: 92vw;
+  }
+
+  .intro-photo-ring {
+    width: 105px;
+    height: 105px;
   }
 
   .crown-icon {
-    font-size: 2.4rem;
+    font-size: 2.2rem;
   }
 
   .intro-title {
-    font-size: 1.8rem;
-    letter-spacing: 1.5px;
+    font-size: 1.65rem;
+    letter-spacing: 1px;
   }
 
   .intro-subtitle {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
 
   .intro-desc {
@@ -1043,8 +1190,9 @@ html, body {
   }
 
   .tribute-img-wrap {
-    width: 85px;
-    height: 85px;
+    width: 120px;
+    height: 138px;
+    margin-bottom: 12px;
   }
 
   .tribute-body {
@@ -1059,7 +1207,36 @@ html, body {
 
 @media (max-width: 480px) {
   .camera-toolbar {
-    display: none;
+    display: flex;
+    top: 58px;
+    padding: 3px 5px;
+    gap: 3px;
+    max-width: calc(100vw - 12px);
+  }
+
+  .cam-btn {
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    gap: 3px;
+  }
+
+  .intro-photo-ring {
+    width: 92px;
+    height: 92px;
+  }
+
+  .intro-title {
+    font-size: 1.45rem;
+    letter-spacing: 0.5px;
+  }
+
+  .intro-subtitle {
+    font-size: 1.2rem;
+  }
+
+  .intro-desc {
+    font-size: 0.82rem;
+    margin-bottom: 16px;
   }
 
   .greeting-title {
@@ -1078,5 +1255,26 @@ html, body {
   .interaction-tip {
     font-size: 0.7rem;
     padding: 3px 10px;
+  }
+
+  .tribute-img-wrap {
+    width: 110px;
+    height: 128px;
+  }
+
+  .photo-lightbox-box {
+    padding: 20px 14px 18px;
+  }
+
+  .lightbox-crown {
+    font-size: 1.8rem;
+  }
+
+  .lightbox-name {
+    font-size: 1.3rem;
+  }
+
+  .lightbox-wish {
+    font-size: 1.25rem;
   }
 }

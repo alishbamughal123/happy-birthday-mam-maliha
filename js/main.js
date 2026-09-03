@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const lanternModal = document.getElementById('lantern-modal');
   const giftModal = document.getElementById('gift-modal');
   const themeModal = document.getElementById('theme-modal');
+  const photoModal = document.getElementById('photo-modal');
+  const openPhotoLightbox = document.getElementById('open-photo-lightbox');
+  const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
 
   const sendWishBtn = document.getElementById('send-wish-btn');
   const lanternInput = document.getElementById('lantern-input');
@@ -245,6 +248,18 @@ document.addEventListener('DOMContentLoaded', () => {
     brandBadge.addEventListener('click', () => {
       sceneInstance.setCameraView('portrait');
       setTimeout(() => openModal(tributeModal), 600);
+    });
+  }
+
+  if (openPhotoLightbox && photoModal) {
+    openPhotoLightbox.addEventListener('click', () => {
+      openModal(photoModal);
+    });
+  }
+
+  if (lightboxCloseBtn) {
+    lightboxCloseBtn.addEventListener('click', () => {
+      closeAllModals();
     });
   }
 

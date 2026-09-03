@@ -73,6 +73,11 @@ class BirthdayScene {
     this.createStardust();
     this.createAmbientLanterns();
 
+    // Call updateCameraForViewport after creating objects so their positions/scales match mobile or desktop immediately
+    this.updateCameraForViewport();
+    this.camera.position.copy(this.cameraViews.overview.pos);
+    this.controls.target.copy(this.cameraViews.overview.target);
+
     window.addEventListener('resize', () => this.onWindowResize(), false);
     window.addEventListener('orientationchange', () => setTimeout(() => this.onWindowResize(), 200), false);
     
@@ -88,23 +93,94 @@ class BirthdayScene {
     const height = this.container.clientHeight || window.innerHeight;
     const aspect = width / height;
     const isMobile = width < 768 || aspect < 1.0;
+    this.isMobile = isMobile;
 
     if (isMobile) {
-      this.camera.fov = Math.min(75, Math.max(55, 45 / Math.max(aspect, 0.45) * 0.65));
-      this.cameraViews.overview.pos.set(0, 4.0, 13.5);
-      this.cameraViews.cake.pos.set(0, 3.2, 7.8);
-      this.cameraViews.candle.pos.set(0, 5.8, 4.2);
-      this.cameraViews.portrait.pos.set(-3.4, 3.0, 6.8);
-      this.cameraViews.gift.pos.set(3.4, 2.2, 6.5);
+      // Mobile FOV & Camera Views
+      this.camera.fov = Math.min(65, Math.max(52, (45 / Math.max(aspect, 0.45)) * 0.58));
+
+      // Overview: frames BOTH portrait frame and cake side-by-side perfectly
+      this.cameraViews.overview.pos.set(-0.1, 3.8, 12.5);
+      this.cameraViews.overview.target.set(-0.1, 2.0, 0);
+
+      // 3D Cake view: zooms straight into cake
+      this.cameraViews.cake.pos.set(1.15, 3.0, 6.8);
+      this.cameraViews.cake.target.set(1.15, 2.4, 0.2);
+
+      // Candle view: focuses right on burning flame
+      this.cameraViews.candle.pos.set(1.15, 4.8, 3.8);
+      this.cameraViews.candle.target.set(1.15, 3.6, 0.2);
+
+      // Portrait view: full close-up of Mam Maliha's portrait
+      this.cameraViews.portrait.pos.set(-1.35, 2.8, 5.5);
+      this.cameraViews.portrait.target.set(-1.35, 2.6, -0.1);
+
+      // Gift view: focuses on the surprise gift box
+      this.cameraViews.gift.pos.set(1.3, 2.0, 5.0);
+      this.cameraViews.gift.target.set(1.3, 0.8, 1.6);
+
+      // Sky view: looks up at flying lanterns
       this.cameraViews.sky.pos.set(0, 5.0, 14.0);
+      this.cameraViews.sky.target.set(0, 16.0, -10);
+
+      // Position Portrait Easel so it is 100% visible on mobile screen without scrolling
+      if (this.portraitGroup) {
+        this.portraitGroup.position.set(-1.4, 0, -0.1);
+        this.portraitGroup.rotation.y = 0.22;
+        this.portraitGroup.scale.set(0.85, 0.85, 0.85);
+      }
+
+      // Position Cake slightly to the right so both fit harmoniously
+      if (this.cake && this.cake.cakeGroup) {
+        this.cake.cakeGroup.position.set(1.15, 0, 0.3);
+        this.cake.cakeGroup.scale.set(0.72, 0.72, 0.72);
+      }
+
+      // Position Gift Box in front of the cake on mobile
+      if (this.giftBoxes && this.giftBoxes[0] && this.giftBoxes[0].group) {
+        this.giftBoxes[0].group.position.set(1.3, 0, 1.8);
+        this.giftBoxes[0].group.scale.set(0.68, 0.68, 0.68);
+        this.giftBoxes[0].group.rotation.y = -0.35;
+      }
     } else {
+      // Desktop FOV & Camera Views
       this.camera.fov = 45;
+
       this.cameraViews.overview.pos.set(0, 4.5, 11);
+      this.cameraViews.overview.target.set(0, 2.2, 0);
+
       this.cameraViews.cake.pos.set(0, 3.5, 6.2);
+      this.cameraViews.cake.target.set(0, 2.8, 0);
+
       this.cameraViews.candle.pos.set(0, 5.6, 3.5);
+      this.cameraViews.candle.target.set(0, 4.6, 0);
+
       this.cameraViews.portrait.pos.set(-3.8, 3.2, 5.2);
+      this.cameraViews.portrait.target.set(-4.0, 2.8, 0);
+
       this.cameraViews.gift.pos.set(3.8, 2.4, 4.8);
+      this.cameraViews.gift.target.set(3.8, 1.2, 0.8);
+
       this.cameraViews.sky.pos.set(0, 5.0, 12);
+      this.cameraViews.sky.target.set(0, 16.0, -10);
+
+      // Desktop layout positions
+      if (this.portraitGroup) {
+        this.portraitGroup.position.set(-4.2, 0, 0);
+        this.portraitGroup.rotation.y = 0.38;
+        this.portraitGroup.scale.set(1.0, 1.0, 1.0);
+      }
+
+      if (this.cake && this.cake.cakeGroup) {
+        this.cake.cakeGroup.position.set(0, 0, 0);
+        this.cake.cakeGroup.scale.set(1.0, 1.0, 1.0);
+      }
+
+      if (this.giftBoxes && this.giftBoxes[0] && this.giftBoxes[0].group) {
+        this.giftBoxes[0].group.position.set(3.8, 0, 0.8);
+        this.giftBoxes[0].group.scale.set(1.0, 1.0, 1.0);
+        this.giftBoxes[0].group.rotation.y = -0.4;
+      }
     }
 
     this.camera.aspect = aspect;
@@ -245,13 +321,14 @@ class BirthdayScene {
     shelf.castShadow = true;
     this.portraitGroup.add(shelf);
 
-    const frameWidth = 2.0;
-    const frameHeight = 2.4;
+    // Natural aspect ratio for 592x550 photo: 2.1 wide x 2.0 high
+    const frameWidth = 2.1;
+    const frameHeight = 2.0;
     const frameThick = 0.12;
 
-    const frameOuterGeo = new THREE.BoxGeometry(frameWidth + 0.3, frameHeight + 0.3, frameThick);
+    const frameOuterGeo = new THREE.BoxGeometry(frameWidth + 0.28, frameHeight + 0.28, frameThick);
     const frameMesh = new THREE.Mesh(frameOuterGeo, goldMat);
-    frameMesh.position.set(0, 3.25, 0.15);
+    frameMesh.position.set(0, 3.15, 0.15);
     frameMesh.rotation.x = -0.1;
     frameMesh.castShadow = true;
     this.portraitGroup.add(frameMesh);
@@ -270,7 +347,7 @@ class BirthdayScene {
         });
         const photoGeo = new THREE.PlaneGeometry(frameWidth, frameHeight);
         const photoMesh = new THREE.Mesh(photoGeo, photoMat);
-        photoMesh.position.set(0, 3.25, 0.22);
+        photoMesh.position.set(0, 3.15, 0.22);
         photoMesh.rotation.x = -0.1;
         photoMesh.name = 'portrait_frame';
         this.portraitGroup.add(photoMesh);
@@ -281,24 +358,29 @@ class BirthdayScene {
     const lightCount = 18;
     const fairyMat = new THREE.MeshBasicMaterial({ color: 0xffe680 });
     const fairyLight = new THREE.PointLight(0xffd700, 1.2, 5, 2);
-    fairyLight.position.set(0, 3.25, 0.8);
+    fairyLight.position.set(0, 3.15, 0.8);
     this.portraitGroup.add(fairyLight);
+
+    const halfW = (frameWidth + 0.2) / 2;
+    const halfH = (frameHeight + 0.2) / 2;
+    const topY = 3.15 + halfH;
+    const botY = 3.15 - halfH;
 
     for (let i = 0; i < lightCount; i++) {
       const progress = i / lightCount;
       let fx, fy;
       if (progress < 0.25) {
-        fx = -1.1 + (progress / 0.25) * 2.2;
-        fy = 4.55;
+        fx = -halfW + (progress / 0.25) * (halfW * 2);
+        fy = topY;
       } else if (progress < 0.5) {
-        fx = 1.1;
-        fy = 4.55 - ((progress - 0.25) / 0.25) * 2.6;
+        fx = halfW;
+        fy = topY - ((progress - 0.25) / 0.25) * (topY - botY);
       } else if (progress < 0.75) {
-        fx = 1.1 - ((progress - 0.5) / 0.25) * 2.2;
-        fy = 1.95;
+        fx = halfW - ((progress - 0.5) / 0.25) * (halfW * 2);
+        fy = botY;
       } else {
-        fx = -1.1;
-        fy = 1.95 + ((progress - 0.75) / 0.25) * 2.6;
+        fx = -halfW;
+        fy = botY + ((progress - 0.75) / 0.25) * (topY - botY);
       }
 
       const fairy = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), fairyMat);
@@ -518,7 +600,8 @@ class BirthdayScene {
       });
     }
 
-    this.createMiniExplosion(new THREE.Vector3(3.8, 1.8, 0.8), 0xffd700, 35);
+    const burstPos = gift.group.position.clone().add(new THREE.Vector3(0, 1.4, 0));
+    this.createMiniExplosion(burstPos, 0xffd700, 35);
   }
 
   closeGiftBox() {
@@ -917,7 +1000,7 @@ class BirthdayScene {
 
     if (this.isAutoRotating) {
       this.controls.autoRotate = true;
-      this.controls.autoRotateSpeed = 0.6;
+      this.controls.autoRotateSpeed = 0.35;
     } else {
       this.controls.autoRotate = false;
     }
